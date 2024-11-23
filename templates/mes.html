@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banco de Horas - {{ mes }}/{{ ano }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-b from-blue-500 to-blue-400 p-4">
+    <div class="max-w-md mx-auto space-y-4">
+        <!-- Cabeçalho -->
+        <div class="text-white mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <a href="/" class="hover:text-blue-200">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h2 class="text-lg flex-1 text-center">{{ nome_mes }}/{{ ano }}</h2>
+                <div class="w-4"></div>
+            </div>
+        </div>
+
+        <!-- Card Principal -->
+        <div class="bg-white rounded-xl shadow-lg">
+            <!-- Seção de Dias -->
+            <div class="p-4 bg-blue-50">
+                <h3 class="text-sm font-medium text-gray-700 mb-3">Dias</h3>
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="flex flex-col items-center p-3 bg-white rounded-lg shadow-sm">
+                        <i class="fas fa-calendar mb-1 text-gray-600"></i>
+                        <span class="text-xs text-gray-500">Total</span>
+                        <span class="text-sm font-medium">{{ mes_data.total_dias }}</span>
+                    </div>
+                    <div class="flex flex-col items-center p-3 bg-white rounded-lg shadow-sm">
+                        <i class="fas fa-calendar-minus mb-1 text-gray-600"></i>
+                        <span class="text-xs text-gray-500">Não Contábeis</span>
+                        <span class="text-sm font-medium">{{ mes_data.dias_nao_contabeis_count }}</span>
+                    </div>
+                    <div class="flex flex-col items-center p-3 bg-white rounded-lg shadow-sm">
+                        <i class="fas fa-calendar-check mb-1 text-gray-600"></i>
+                        <span class="text-xs text-gray-500">Previstos</span>
+                        <span class="text-sm font-medium">{{ mes_data.dias_previstos }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seção de Horas -->
+            <div class="p-4 border-t border-gray-100 bg-indigo-50">
+                <h3 class="text-sm font-medium text-gray-700 mb-3">Horas</h3>
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="flex flex-col items-center p-3 bg-white rounded-lg shadow-sm">
+                        <i class="fas fa-clock mb-1 text-gray-600"></i>
+                        <span class="text-xs text-gray-500">Previsto</span>
+                        <span class="text-sm font-medium">{{ mes_data.previsto }}</span>
+                    </div>
+                    <div class="flex flex-col items-center p-3 bg-white rounded-lg shadow-sm">
+                        <i class="fas fa-hourglass mb-1 text-gray-600"></i>
+                        <span class="text-xs text-gray-500">Trabalhado</span>
+                        <span class="text-sm font-medium">{{ mes_data.trabalhado }}</span>
+                    </div>
+                    <div class="flex flex-col items-center p-3 bg-white rounded-lg shadow-sm">
+                        <i class="fas fa-chart-line mb-1 text-gray-600"></i>
+                        <span class="text-xs text-gray-500">Saldo</span>
+                        <span class="text-sm font-medium {% if mes_data.saldo.startswith('+') %}text-green-600{% elif mes_data.saldo.startswith('-') %}text-red-600{% else %}text-gray-600{% endif %}">{{ mes_data.saldo }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botão Fazer Lançamento -->
+            <div class="p-4 border-t border-gray-100">
+                <button id="btnFazerLancamento" onclick="toggleForms()" class="w-full bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600">
+                    <i class="fas fa-plus mr-2"></i>Fazer Lançamento
+                </button>
+            </div>
+
+            <!-- Lista de Dias Não Contábeis -->
+            {% if dias_nao_contabeis %}
+            <div class="p-4 border-t border-gray-100 bg-gray-50">
+                <h3 class="text-sm font-medium text-gray-700 mb-3">Dias Não Contábeis</h3>
+                <div class="space-y-2">
+                    {% for dia in dias_nao_contabeis %}
+                    <div class="p-3 rounded-lg border border-gray-200 bg-white">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-blue-600">{{ dia.data }}</p>
+                                <p class="text-xs text-gray-500">{{ dia.tipo|title }}</p>
+                            </div>
+                            <button onclick="deleteDiaNaoContabil({{ dia.id }})" class="text-gray-400 hover:text-red-500">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Lista de Turnos -->
+            {% if turnos %}
+            <div class="p-4 border-t border-gray-100 bg-gray-50">
+                <h3 class="text-sm font-medium text-gray-700 mb-3">Turnos</h3>
+                <div class="space-y-2">
+                    {% for turno in turnos %}
+                    <div class="p-3 rounded-lg border border-gray-200 bg-white">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-blue-600">{{ turno.data }}</p>
+                                <p class="text-xs text-gray-500">{{ turno.hora_inicial }} - {{ turno.hora_final }}</p>
+                                {% if turno.descricao %}
+                                <p class="text-xs text-gray-600">{{ turno.descricao }}</p>
+                                {% endif %}
+                            </div>
+                            <button onclick="deleteTurno({{ turno.id }})" class="text-gray-400 hover:text-red-500">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Modal de Lançamentos -->
+    <div id="modalLancamentos" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
+        <div class="relative top-20 mx-auto p-5 w-full max-w-md">
+            <div class="relative bg-white rounded-xl shadow-lg">
+                <!-- Cabeçalho do Modal -->
+                <div class="flex justify-between items-center p-4 border-b">
+                    <h3 class="text-lg font-medium text-gray-900">Fazer Lançamento</h3>
+                    <button onclick="toggleForms()" class="text-gray-400 hover:text-gray-500">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <!-- Conteúdo do Modal -->
+                <div class="p-4">
+                    <!-- Botões de Tab -->
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <button id="tab-turnos" class="tab-btn p-2 text-sm rounded-lg bg-blue-500 text-white">
+                            <i class="fas fa-clock mr-2"></i>Turnos
+                        </button>
+                        <button id="tab-nao-contabeis" class="tab-btn p-2 text-sm rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200">
+                            <i class="fas fa-calendar-times mr-2"></i>Não Contábeis
+                        </button>
+                    </div>
+
+                    <!-- Conteúdo das Tabs -->
+                    <div>
+                        <!-- Tab Turnos -->
+                        <div id="content-turnos" class="space-y-4">
+                            <form action="{{ url_for('lancar_turno') }}" method="POST" class="space-y-4">
+                                <input type="hidden" name="mes" value="{{ mes }}">
+                                <input type="hidden" name="ano" value="{{ ano }}">
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                                    <input type="text" name="data" class="data-picker w-full rounded-lg border-gray-300 bg-gray-100 p-2" required>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Hora Inicial</label>
+                                        <input type="text" name="hora_inicial" class="time-picker w-full rounded-lg border-gray-300 bg-gray-100 p-2" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Hora Final</label>
+                                        <input type="text" name="hora_final" class="time-picker w-full rounded-lg border-gray-300 bg-gray-100 p-2" required>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                                    <input type="text" name="descricao" class="w-full rounded-lg border-gray-300 bg-gray-100 p-2">
+                                </div>
+                                
+                                <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600">
+                                    <i class="fas fa-plus mr-2"></i>Adicionar
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Tab Não Contábeis -->
+                        <div id="content-nao-contabeis" class="space-y-4 hidden">
+                            <form action="{{ url_for('lancar_dia_nao_contabil') }}" method="POST" class="space-y-4">
+                                <input type="hidden" name="mes" value="{{ mes }}">
+                                <input type="hidden" name="ano" value="{{ ano }}">
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Datas</label>
+                                    <input type="text" name="dias" class="calendar-picker w-full rounded-lg border-gray-300 bg-gray-100 p-2" required>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                                    <select name="tipo" class="w-full rounded-lg border-gray-300 bg-gray-100 p-2" required>
+                                        <option value="ferias">Férias</option>
+                                        <option value="feriado">Feriado</option>
+                                        <option value="outros">Outros</option>
+                                    </select>
+                                </div>
+                                
+                                <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600">
+                                    <i class="fas fa-plus mr-2"></i>Adicionar
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Inicialização do Flatpickr para datas
+        flatpickr(".data-picker", {
+            locale: "pt",
+            dateFormat: "d/m/Y",
+            maxDate: "today"
+        });
+
+        // Inicialização do Flatpickr para múltiplas datas
+        flatpickr(".calendar-picker", {
+            locale: "pt",
+            dateFormat: "d/m/Y",
+            mode: "multiple",
+            maxDate: "today"
+        });
+
+        // Inicialização do Flatpickr para horários
+        flatpickr(".time-picker", {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: true,
+            minuteIncrement: 1
+        });
+
+        // Funcionalidade das tabs
+        document.getElementById('tab-turnos').addEventListener('click', function() {
+            document.getElementById('content-turnos').classList.remove('hidden');
+            document.getElementById('content-nao-contabeis').classList.add('hidden');
+            this.classList.add('bg-blue-500', 'text-white');
+            this.classList.remove('bg-gray-100', 'text-gray-600');
+            document.getElementById('tab-nao-contabeis').classList.add('bg-gray-100', 'text-gray-600');
+            document.getElementById('tab-nao-contabeis').classList.remove('bg-blue-500', 'text-white');
+        });
+
+        document.getElementById('tab-nao-contabeis').addEventListener('click', function() {
+            document.getElementById('content-turnos').classList.add('hidden');
+            document.getElementById('content-nao-contabeis').classList.remove('hidden');
+            this.classList.add('bg-blue-500', 'text-white');
+            this.classList.remove('bg-gray-100', 'text-gray-600');
+            document.getElementById('tab-turnos').classList.add('bg-gray-100', 'text-gray-600');
+            document.getElementById('tab-turnos').classList.remove('bg-blue-500', 'text-white');
+        });
+
+        function deleteTurno(id) {
+            if (confirm('Deseja realmente excluir este turno?')) {
+                window.location.href = `/excluir_turno/${id}`;
+            }
+        }
+
+        function deleteDiaNaoContabil(id) {
+            if (confirm('Deseja realmente excluir este dia não contábil?')) {
+                window.location.href = `/excluir_dia_nao_contabil/${id}`;
+            }
+        }
+
+        function toggleForms() {
+            const modal = document.getElementById('modalLancamentos');
+            const button = document.getElementById('btnFazerLancamento');
+            
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; // Impede rolagem do fundo
+                button.innerHTML = '<i class="fas fa-minus mr-2"></i>Ocultar Lançamento';
+            } else {
+                modal.classList.add('hidden');
+                document.body.style.overflow = ''; // Restaura rolagem
+                button.innerHTML = '<i class="fas fa-plus mr-2"></i>Fazer Lançamento';
+            }
+        }
+
+        // Fechar modal ao clicar fora dele
+        document.getElementById('modalLancamentos').addEventListener('click', function(e) {
+            if (e.target === this) {
+                toggleForms();
+            }
+        });
+
+        // Fechar modal com a tecla ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && !document.getElementById('modalLancamentos').classList.contains('hidden')) {
+                toggleForms();
+            }
+        });
+    </script>
+</body>
+</html>

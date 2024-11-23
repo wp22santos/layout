@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sistema de Banco de Horas - Controle de horas trabalhadas">
+    <title>Banco de Horas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="min-h-screen bg-gradient-to-b from-blue-500 to-blue-400 p-4">
+    <div class="max-w-md mx-auto space-y-4">
+        <!-- Header -->
+        <header class="text-white mb-6">
+            <div class="text-center mb-4">
+                <h1 class="text-2xl font-bold">Banco de Horas</h1>
+            </div>
+            <div class="flex justify-center items-center space-x-2">
+                <div class="flex items-center bg-white/20 rounded-lg px-2 py-1">
+                    <button 
+                        type="button"
+                        onclick="changeYear(-1)" 
+                        class="p-1 hover:bg-white/10 rounded transition-colors"
+                        aria-label="Ano anterior">
+                        <i class="fas fa-chevron-left w-4 h-4 text-white"></i>
+                    </button>
+                    <span class="mx-2 text-white font-medium" id="yearDisplay">{{ year }}</span>
+                    <button 
+                        type="button"
+                        onclick="changeYear(1)" 
+                        class="p-1 hover:bg-white/10 rounded transition-colors"
+                        aria-label="Próximo ano">
+                        <i class="fas fa-chevron-right w-4 h-4 text-white"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Quarter Selector and Card -->
+        <section class="bg-white rounded-xl shadow-lg p-4">
+            <div class="pb-2">
+                <div class="grid grid-cols-4 gap-2 mb-4">
+                    {% for quarter in quarter_data %}
+                    <button
+                        type="button"
+                        onclick="selectQuarter({{ loop.index0 }})"
+                        class="quarter-btn p-2 text-sm rounded-lg transition-colors duration-200 {% if loop.index0 == 0 %}bg-blue-500 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}"
+                        data-quarter="{{ loop.index0 }}"
+                        aria-label="{{ loop.index }}º Trimestre"
+                    >
+                        {{ loop.index }}º Tri
+                    </button>
+                    {% endfor %}
+                </div>
+                <h2 class="text-lg font-medium text-blue-600">
+                    <span id="quarterName">{{ quarter_data[0].name }}</span>
+                    <span class="text-sm text-gray-500 ml-2" id="quarterMonths">({{ quarter_data[0].months|join(', ') }})</span>
+                </h2>
+            </div>
+            <div class="pt-4">
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="flex flex-col items-center p-3 bg-gray-50 rounded-lg">
+                        <i class="fas fa-clock w-5 h-5 text-gray-600 mb-1" aria-hidden="true"></i>
+                        <span class="text-xs text-gray-500">Previsto</span>
+                        <span class="text-sm font-medium" id="quarterPrevisto">{{ quarter_data[0].previsto }}</span>
+                    </div>
+                    <div class="flex flex-col items-center p-3 bg-gray-50 rounded-lg">
+                        <i class="fas fa-hourglass w-5 h-5 text-gray-600 mb-1" aria-hidden="true"></i>
+                        <span class="text-xs text-gray-500">Trabalhado</span>
+                        <span class="text-sm font-medium" id="quarterTrabalhado">{{ quarter_data[0].trabalhado }}</span>
+                    </div>
+                    <div class="flex flex-col items-center p-3 bg-gray-50 rounded-lg">
+                        <i class="fas fa-tachometer-alt w-5 h-5 text-gray-600 mb-1" aria-hidden="true"></i>
+                        <span class="text-xs text-gray-500">Saldo</span>
+                        <span class="text-sm font-medium" id="quarterSaldo">{{ quarter_data[0].saldo }}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Monthly View Card -->
+        <section class="bg-white rounded-xl shadow-lg p-4">
+            <div class="mb-4">
+                <h2 class="text-lg font-medium">Visão Mensal</h2>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                {% for month in month_data %}
+                <a href="{{ url_for('mes_detalhe', mes=loop.index) }}" 
+                   class="block focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg">
+                    <div class="p-3 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <p class="text-sm font-medium text-blue-600 mb-2">{{ month.month }}</p>
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-gray-500">Previsto:</span>
+                                <span class="font-medium">{{ month.previsto }}</span>
+                            </div>
+                            <div class="flex justify-between text-xs">
+                                <span class="text-gray-500">Trabalhado:</span>
+                                <span class="font-medium">{{ month.trabalhado }}</span>
+                            </div>
+                            <div class="flex justify-between text-xs">
+                                <span class="text-gray-500">Saldo:</span>
+                                <span class="font-medium {% if month.saldo.startswith('+') %}text-green-600{% elif month.saldo.startswith('-') %}text-red-600{% else %}text-gray-600{% endif %}">
+                                    {{ month.saldo }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <!-- Floating Action Button -->
+    <button 
+        type="button"
+        onclick="window.location.href='{{ url_for('mes_detalhe', mes=current_month) }}'" 
+        class="fixed bottom-6 right-6 w-14 h-14 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+        aria-label="Adicionar registro">
+        <i class="fas fa-plus text-xl" aria-hidden="true"></i>
+    </button>
+
+    <script>
+        const quarterData = {{ quarter_data|tojson|safe }};
+        let currentYear = {{ year }};
+
+        function selectQuarter(index) {
+            // Update quarter buttons
+            document.querySelectorAll('.quarter-btn').forEach((btn, i) => {
+                if (i === index) {
+                    btn.classList.remove('bg-gray-100', 'text-gray-600');
+                    btn.classList.add('bg-blue-500', 'text-white');
+                } else {
+                    btn.classList.remove('bg-blue-500', 'text-white');
+                    btn.classList.add('bg-gray-100', 'text-gray-600');
+                }
+            });
+
+            // Update quarter information
+            const quarter = quarterData[index];
+            document.getElementById('quarterName').textContent = quarter.name;
+            document.getElementById('quarterMonths').textContent = `(${quarter.months.join(', ')})`;
+            document.getElementById('quarterPrevisto').textContent = quarter.previsto;
+            document.getElementById('quarterTrabalhado').textContent = quarter.trabalhado;
+            
+            const saldoElement = document.getElementById('quarterSaldo');
+            saldoElement.textContent = quarter.saldo;
+            saldoElement.className = `text-sm font-medium ${
+                quarter.saldo.startsWith('+') ? 'text-green-600' : 
+                quarter.saldo.startsWith('-') ? 'text-red-600' : 
+                'text-gray-600'
+            }`;
+        }
+
+        function changeYear(delta) {
+            currentYear += delta;
+            document.getElementById('yearDisplay').textContent = currentYear;
+            // Here you would typically make an AJAX call to update the year's data
+            // Example:
+            // fetch(`/api/year-data/${currentYear}`)
+            //     .then(response => response.json())
+            //     .then(data => updateYearData(data))
+            //     .catch(error => console.error('Error fetching year data:', error));
+        }
+
+        // Optional: Add error handling for quarterData
+        if (!Array.isArray(quarterData) || quarterData.length === 0) {
+            console.error('Quarter data is missing or invalid');
+        }
+    </script>
+</body>
+</html>
