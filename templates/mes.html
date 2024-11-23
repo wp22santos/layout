@@ -162,34 +162,24 @@
                             <form action="{{ url_for('lancar_turno') }}" method="POST" class="space-y-4">
                                 <input type="hidden" name="mes" value="{{ mes }}">
                                 <input type="hidden" name="ano" value="{{ ano }}">
+                                <input type="hidden" id="data-turno" name="data" required>
                                 
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Data</label>
-                                    <div class="relative">
-                                        <input type="text" name="data" class="data-picker w-full rounded-lg border-gray-300 bg-gray-100 p-2" required>
-                                        <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                    </div>
+                                <div class="bg-white rounded-lg p-4 shadow-sm">
+                                    <div id="calendar-container-turno"></div>
                                 </div>
-                                
+
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Hora Inicial</label>
-                                        <input type="text" name="hora_inicial" class="time-picker w-full rounded-lg border-gray-300 bg-gray-100 p-2" required>
+                                        <input type="time" name="hora_inicial" class="w-full rounded-lg border-gray-300 bg-gray-100 p-2" required>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Hora Final</label>
-                                        <input type="text" name="hora_final" class="time-picker w-full rounded-lg border-gray-300 bg-gray-100 p-2" required>
+                                        <input type="time" name="hora_final" class="w-full rounded-lg border-gray-300 bg-gray-100 p-2" required>
                                     </div>
                                 </div>
                                 
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                                    <input type="text" name="descricao" class="w-full rounded-lg border-gray-300 bg-gray-100 p-2">
-                                </div>
-                                
-                                <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600">
+                                <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 flex items-center justify-center">
                                     <i class="fas fa-plus mr-2"></i>Adicionar
                                 </button>
                             </form>
@@ -228,7 +218,25 @@
     </div>
 
     <script>
-        // Função para inicializar o calendário com o dia atual
+        // Inicialização do Flatpickr para datas
+        flatpickr(".data-picker", {
+            locale: "pt",
+            dateFormat: "d/m/Y",
+            disableMobile: "true",
+            static: true,
+            onChange: function(selectedDates, dateStr, instance) {
+                // Ao selecionar uma data, mostra o botão de confirmação
+                const submitBtn = instance.element.nextElementSibling;
+                if (submitBtn) {
+                    submitBtn.classList.remove('hidden');
+                }
+            }
+        });
+
+        // Configuração do calendário para não contábeis
+        let calendarInstance = null;
+        let selectedDates = [];
+
         function initializeCalendar() {
             if (!calendarInstance) {
                 const hoje = new Date();
@@ -281,20 +289,117 @@
             }
         }
 
-        // Inicialização do Flatpickr para datas
-        flatpickr(".data-picker", {
-            locale: "pt",
-            dateFormat: "d/m/Y",
-            disableMobile: "true",
-            static: true,
-            onChange: function(selectedDates, dateStr, instance) {
-                // Ao selecionar uma data, mostra o botão de confirmação
-                const submitBtn = instance.element.nextElementSibling;
-                if (submitBtn) {
-                    submitBtn.classList.remove('hidden');
-                }
+        // Configuração do calendário para turnos
+        let calendarInstanceTurno = null;
+
+        function initializeCalendarTurno() {
+            if (!calendarInstanceTurno) {
+                const hoje = new Date();
+                const diaAtual = hoje.getDate();
+                
+                calendarInstanceTurno = flatpickr("#calendar-container-turno", {
+                    locale: "pt",
+                    dateFormat: "d/m/Y",
+                    disableMobile: "true",
+                    inline: true,
+                    defaultDate: hoje,
+                    minDate: new Date({{ ano }}, {{ mes }} - 1, 1),
+                    maxDate: new Date({{ ano }}, {{ mes }}, 0),
+                    onChange: function(dates) {
+                        const dataInput = document.getElementById('data-turno');
+                        if (dates.length > 0) {
+                            const d = new Date(dates[0]);
+                            dataInput.value = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+                        } else {
+                            dataInput.value = '';
+                        }
+                    },
+                    onReady: function(selectedDates, dateStr, instance) {
+                        // Seleciona o dia atual após o calendário estar pronto
+                        const currentDate = new Date({{ ano }}, {{ mes }} - 1, diaAtual);
+                        instance.setDate(currentDate, true);
+                        
+                        // Forçar as cores corretas após a inicialização
+                        const monthElement = document.querySelector('.flatpickr-current-month');
+                        const weekdaysElements = document.querySelectorAll('.flatpickr-weekday');
+                        
+                        if (monthElement) {
+                            monthElement.style.color = '#3B82F6';
+                        }
+                        
+                        weekdaysElements.forEach(el => {
+                            el.style.color = '#3B82F6';
+                        });
+                    }
+                });
+
+                // Atualizar o texto do mês atual
+                const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+                const currentMonthElement = calendarInstanceTurno.currentMonthElement;
+                currentMonthElement.textContent = `${monthNames[{{ mes }} - 1]} de {{ ano }}`;
+            }
+        }
+
+        // Inicialização dos calendários quando a página carrega
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verifica qual aba está ativa
+            const contentTurnos = document.getElementById('content-turnos');
+            const contentNaoContabeis = document.getElementById('content-nao-contabeis');
+
+            if (!contentTurnos.classList.contains('hidden')) {
+                setTimeout(() => {
+                    initializeCalendarTurno();
+                }, 100);
+            }
+            if (!contentNaoContabeis.classList.contains('hidden')) {
+                setTimeout(() => {
+                    initializeCalendar();
+                }, 100);
             }
         });
+
+        // Event listeners para as abas
+        document.getElementById('tab-turnos').addEventListener('click', function() {
+            setTimeout(() => {
+                initializeCalendarTurno();
+            }, 100);
+        });
+
+        document.getElementById('tab-nao-contabeis').addEventListener('click', function() {
+            setTimeout(() => {
+                initializeCalendar();
+            }, 100);
+        });
+
+        // Função para calcular e atualizar os valores dos cards
+        function atualizarCards() {
+            // Calcula dias no mês atual
+            const hoje = new Date();
+            const diasNoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
+            
+            // Conta os dias não contábeis
+            const listaNaoContabeis = document.querySelectorAll('.lista-nao-contabeis .p-3').length;
+            
+            // Calcula dias a trabalhar
+            const diasTrabalhar = diasNoMes - listaNaoContabeis;
+            
+            // Atualiza os valores nos cards
+            document.querySelector('[data-card="dias-mes"]').textContent = diasNoMes;
+            document.querySelector('[data-card="nao-contabeis"]').textContent = listaNaoContabeis;
+            document.querySelector('[data-card="dias-trabalhar"]').textContent = diasTrabalhar;
+        }
+
+        // Atualiza os cards quando a página carrega
+        document.addEventListener('DOMContentLoaded', function() {
+            atualizarCards();
+        });
+
+        // Atualiza os cards quando houver mudanças na lista de não contábeis
+        const observer = new MutationObserver(atualizarCards);
+        const listaNaoContabeis = document.querySelector('.lista-nao-contabeis');
+        if (listaNaoContabeis) {
+            observer.observe(listaNaoContabeis, { childList: true, subtree: true });
+        }
 
         // Abre o modal automaticamente se o parâmetro modal=true estiver na URL
         document.addEventListener('DOMContentLoaded', function() {
@@ -417,10 +522,6 @@
             }
         });
 
-        // Configuração do calendário para não contábeis
-        let calendarInstance = null;
-        let selectedDates = [];
-
         // Adiciona validação ao formulário
         document.getElementById('form-nao-contabeis').addEventListener('submit', function(e) {
             const dataInput = document.getElementById('data-nao-contabil');
@@ -438,36 +539,6 @@
                 return false;
             }
         });
-
-        // Função para calcular e atualizar os valores dos cards
-        function atualizarCards() {
-            // Calcula dias no mês atual
-            const hoje = new Date();
-            const diasNoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
-            
-            // Conta os dias não contábeis
-            const listaNaoContabeis = document.querySelectorAll('.lista-nao-contabeis .p-3').length;
-            
-            // Calcula dias a trabalhar
-            const diasTrabalhar = diasNoMes - listaNaoContabeis;
-            
-            // Atualiza os valores nos cards
-            document.querySelector('[data-card="dias-mes"]').textContent = diasNoMes;
-            document.querySelector('[data-card="nao-contabeis"]').textContent = listaNaoContabeis;
-            document.querySelector('[data-card="dias-trabalhar"]').textContent = diasTrabalhar;
-        }
-
-        // Atualiza os cards quando a página carrega
-        document.addEventListener('DOMContentLoaded', function() {
-            atualizarCards();
-        });
-
-        // Atualiza os cards quando houver mudanças na lista de não contábeis
-        const observer = new MutationObserver(atualizarCards);
-        const listaNaoContabeis = document.querySelector('.lista-nao-contabeis');
-        if (listaNaoContabeis) {
-            observer.observe(listaNaoContabeis, { childList: true, subtree: true });
-        }
     </script>
 </body>
 </html>
