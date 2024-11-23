@@ -218,158 +218,181 @@
     </div>
 
     <script>
-        // Inicialização do Flatpickr para datas
-        flatpickr(".data-picker", {
-            locale: "pt",
-            dateFormat: "d/m/Y",
-            disableMobile: "true",
-            static: true,
-            onChange: function(selectedDates, dateStr, instance) {
-                // Ao selecionar uma data, mostra o botão de confirmação
-                const submitBtn = instance.element.nextElementSibling;
-                if (submitBtn) {
-                    submitBtn.classList.remove('hidden');
-                }
-            }
-        });
-
-        // Configuração do calendário para não contábeis
+        // Variáveis globais para os calendários
         let calendarInstance = null;
+        let calendarInstanceTurno = null;
         let selectedDates = [];
 
-        function initializeCalendar() {
+        // Função única de inicialização
+        function initializeApp() {
+            // Inicializa os calendários imediatamente
             if (!calendarInstance) {
-                const hoje = new Date();
-                const diaAtual = hoje.getDate();
-                
-                calendarInstance = flatpickr("#calendar-container", {
-                    locale: "pt",
-                    dateFormat: "d/m/Y",
-                    disableMobile: "true",
-                    inline: true,
-                    mode: "multiple",
-                    defaultDate: hoje,
-                    minDate: new Date({{ ano }}, {{ mes }} - 1, 1),
-                    maxDate: new Date({{ ano }}, {{ mes }}, 0),
-                    onChange: function(dates) {
-                        selectedDates = dates;
-                        const dataInput = document.getElementById('data-nao-contabil');
-                        if (dates.length > 0) {
-                            dataInput.value = dates.map(date => {
-                                const d = new Date(date);
-                                return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-                            }).join(', ');
-                        } else {
-                            dataInput.value = '';
-                        }
-                    },
-                    onReady: function(selectedDates, dateStr, instance) {
-                        // Seleciona o dia atual após o calendário estar pronto
-                        const currentDate = new Date({{ ano }}, {{ mes }} - 1, diaAtual);
-                        instance.setDate(currentDate, true);
-                        
-                        // Forçar as cores corretas após a inicialização
-                        const monthElement = document.querySelector('.flatpickr-current-month');
-                        const weekdaysElements = document.querySelectorAll('.flatpickr-weekday');
-                        
-                        if (monthElement) {
-                            monthElement.style.color = '#3B82F6';
-                        }
-                        
-                        weekdaysElements.forEach(el => {
-                            el.style.color = '#3B82F6';
-                        });
-                    }
-                });
-
-                // Atualizar o texto do mês atual
-                const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-                const currentMonthElement = calendarInstance.currentMonthElement;
-                currentMonthElement.textContent = `${monthNames[{{ mes }} - 1]} de {{ ano }}`;
+                initializeCalendar();
             }
+            if (!calendarInstanceTurno) {
+                initializeCalendarTurno();
+            }
+            
+            // Atualiza os cards
+            atualizarCards();
+            
+            // Configura os event listeners
+            setupEventListeners();
         }
 
-        // Configuração do calendário para turnos
-        let calendarInstanceTurno = null;
+        function initializeCalendar() {
+            const calendarContainer = document.getElementById('calendar-container');
+            if (!calendarContainer) return;
+
+            const hoje = new Date();
+            const diaAtual = hoje.getDate();
+            const currentDate = new Date({{ ano }}, {{ mes }} - 1, diaAtual);
+
+            calendarInstance = flatpickr(calendarContainer, {
+                inline: true,
+                mode: "multiple",
+                dateFormat: "Y-m-d",
+                locale: "pt",
+                defaultDate: currentDate,
+                minDate: new Date({{ ano }}, {{ mes }} - 1, 1),
+                maxDate: new Date({{ ano }}, {{ mes }}, 0),
+                onChange: function(selectedDates, dateStr, instance) {
+                    const datasInput = document.getElementById('datas');
+                    if (datasInput) {
+                        datasInput.value = selectedDates.map(date => {
+                            const d = new Date(date);
+                            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                        }).join(',');
+                    }
+                },
+                onReady: function(selectedDates, dateStr, instance) {
+                    // Seleciona o dia atual após o calendário estar pronto
+                    instance.setDate(currentDate, true);
+                    
+                    // Forçar as cores corretas após a inicialização
+                    const monthElement = document.querySelector('.flatpickr-current-month');
+                    const weekdaysElements = document.querySelectorAll('.flatpickr-weekday');
+                    
+                    if (monthElement) {
+                        monthElement.style.color = '#3B82F6';
+                    }
+                    
+                    weekdaysElements.forEach(el => {
+                        el.style.color = '#3B82F6';
+                    });
+
+                    // Atualizar o texto do mês atual
+                    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+                    const currentMonthElement = instance.currentMonthElement;
+                    currentMonthElement.textContent = `${monthNames[{{ mes }} - 1]} de {{ ano }}`;
+                }
+            });
+        }
 
         function initializeCalendarTurno() {
-            if (!calendarInstanceTurno) {
-                const hoje = new Date();
-                const diaAtual = hoje.getDate();
-                
-                calendarInstanceTurno = flatpickr("#calendar-container-turno", {
-                    locale: "pt",
-                    dateFormat: "d/m/Y",
-                    disableMobile: "true",
-                    inline: true,
-                    defaultDate: hoje,
-                    minDate: new Date({{ ano }}, {{ mes }} - 1, 1),
-                    maxDate: new Date({{ ano }}, {{ mes }}, 0),
-                    onChange: function(dates) {
-                        const dataInput = document.getElementById('data-turno');
-                        if (dates.length > 0) {
-                            const d = new Date(dates[0]);
-                            dataInput.value = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-                        } else {
-                            dataInput.value = '';
-                        }
-                    },
-                    onReady: function(selectedDates, dateStr, instance) {
-                        // Seleciona o dia atual após o calendário estar pronto
-                        const currentDate = new Date({{ ano }}, {{ mes }} - 1, diaAtual);
-                        instance.setDate(currentDate, true);
-                        
-                        // Forçar as cores corretas após a inicialização
-                        const monthElement = document.querySelector('.flatpickr-current-month');
-                        const weekdaysElements = document.querySelectorAll('.flatpickr-weekday');
-                        
-                        if (monthElement) {
-                            monthElement.style.color = '#3B82F6';
-                        }
-                        
-                        weekdaysElements.forEach(el => {
-                            el.style.color = '#3B82F6';
-                        });
-                    }
-                });
+            const calendarContainerTurno = document.getElementById('calendar-container-turno');
+            if (!calendarContainerTurno) return;
 
-                // Atualizar o texto do mês atual
-                const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-                const currentMonthElement = calendarInstanceTurno.currentMonthElement;
-                currentMonthElement.textContent = `${monthNames[{{ mes }} - 1]} de {{ ano }}`;
-            }
+            const hoje = new Date();
+            const diaAtual = hoje.getDate();
+            const currentDate = new Date({{ ano }}, {{ mes }} - 1, diaAtual);
+
+            calendarInstanceTurno = flatpickr(calendarContainerTurno, {
+                inline: true,
+                dateFormat: "Y-m-d",
+                locale: "pt",
+                defaultDate: currentDate,
+                minDate: new Date({{ ano }}, {{ mes }} - 1, 1),
+                maxDate: new Date({{ ano }}, {{ mes }}, 0),
+                onChange: function(selectedDates, dateStr, instance) {
+                    const dataTurnoInput = document.getElementById('data-turno');
+                    if (dataTurnoInput && selectedDates.length > 0) {
+                        const d = new Date(selectedDates[0]);
+                        dataTurnoInput.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                    }
+                },
+                onReady: function(selectedDates, dateStr, instance) {
+                    // Seleciona o dia atual após o calendário estar pronto
+                    instance.setDate(currentDate, true);
+                    
+                    // Forçar as cores corretas após a inicialização
+                    const monthElement = document.querySelector('.flatpickr-current-month');
+                    const weekdaysElements = document.querySelectorAll('.flatpickr-weekday');
+                    
+                    if (monthElement) {
+                        monthElement.style.color = '#3B82F6';
+                    }
+                    
+                    weekdaysElements.forEach(el => {
+                        el.style.color = '#3B82F6';
+                    });
+
+                    // Atualizar o texto do mês atual
+                    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+                    const currentMonthElement = instance.currentMonthElement;
+                    currentMonthElement.textContent = `${monthNames[{{ mes }} - 1]} de {{ ano }}`;
+                }
+            });
         }
 
-        // Inicialização dos calendários quando a página carrega
-        document.addEventListener('DOMContentLoaded', function() {
-            // Verifica qual aba está ativa
+        function setupEventListeners() {
+            // Event listeners para os botões de tab
+            const tabTurnos = document.getElementById('tab-turnos');
+            const tabNaoContabeis = document.getElementById('tab-nao-contabeis');
             const contentTurnos = document.getElementById('content-turnos');
             const contentNaoContabeis = document.getElementById('content-nao-contabeis');
 
-            if (!contentTurnos.classList.contains('hidden')) {
-                setTimeout(() => {
-                    initializeCalendarTurno();
-                }, 100);
+            if (tabTurnos) {
+                tabTurnos.addEventListener('click', function() {
+                    // Mostra conteúdo de Turnos
+                    contentTurnos.classList.remove('hidden');
+                    contentNaoContabeis.classList.add('hidden');
+                    
+                    // Atualiza aparência dos botões
+                    tabTurnos.classList.remove('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
+                    tabTurnos.classList.add('bg-blue-500', 'text-white');
+                    
+                    tabNaoContabeis.classList.remove('bg-blue-500', 'text-white');
+                    tabNaoContabeis.classList.add('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
+                    
+                    if (!calendarInstanceTurno) {
+                        initializeCalendarTurno();
+                    }
+                });
             }
-            if (!contentNaoContabeis.classList.contains('hidden')) {
-                setTimeout(() => {
-                    initializeCalendar();
-                }, 100);
+
+            if (tabNaoContabeis) {
+                tabNaoContabeis.addEventListener('click', function() {
+                    // Mostra conteúdo de Não Contábeis
+                    contentTurnos.classList.add('hidden');
+                    contentNaoContabeis.classList.remove('hidden');
+                    
+                    // Atualiza aparência dos botões
+                    tabNaoContabeis.classList.remove('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
+                    tabNaoContabeis.classList.add('bg-blue-500', 'text-white');
+                    
+                    tabTurnos.classList.remove('bg-blue-500', 'text-white');
+                    tabTurnos.classList.add('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
+                    
+                    if (!calendarInstance) {
+                        initializeCalendar();
+                    }
+                });
             }
-        });
 
-        // Event listeners para as abas
-        document.getElementById('tab-turnos').addEventListener('click', function() {
-            setTimeout(() => {
-                initializeCalendarTurno();
-            }, 100);
-        });
+            // Fechar modal ao clicar fora dele
+            const modalLancamentos = document.getElementById('modalLancamentos');
+            if (modalLancamentos) {
+                modalLancamentos.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        toggleForms();
+                    }
+                });
+            }
+        }
 
-        document.getElementById('tab-nao-contabeis').addEventListener('click', function() {
-            setTimeout(() => {
-                initializeCalendar();
-            }, 100);
-        });
+        // Inicialização única quando o DOM carrega
+        document.addEventListener('DOMContentLoaded', initializeApp);
 
         // Função para calcular e atualizar os valores dos cards
         function atualizarCards() {
@@ -388,43 +411,6 @@
             document.querySelector('[data-card="nao-contabeis"]').textContent = listaNaoContabeis;
             document.querySelector('[data-card="dias-trabalhar"]').textContent = diasTrabalhar;
         }
-
-        // Atualiza os cards quando a página carrega
-        document.addEventListener('DOMContentLoaded', function() {
-            atualizarCards();
-        });
-
-        // Atualiza os cards quando houver mudanças na lista de não contábeis
-        const observer = new MutationObserver(atualizarCards);
-        const listaNaoContabeis = document.querySelector('.lista-nao-contabeis');
-        if (listaNaoContabeis) {
-            observer.observe(listaNaoContabeis, { childList: true, subtree: true });
-        }
-
-        // Abre o modal automaticamente se o parâmetro modal=true estiver na URL
-        document.addEventListener('DOMContentLoaded', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('modal') === 'true') {
-                toggleForms();
-            }
-        });
-
-        // Inicialização do Flatpickr para múltiplas datas
-        flatpickr(".calendar-picker", {
-            locale: "pt",
-            dateFormat: "d/m/Y",
-            mode: "multiple",
-            maxDate: "today"
-        });
-
-        // Inicialização do Flatpickr para horários
-        flatpickr(".time-picker", {
-            enableTime: true,
-            noCalendar: true,
-            dateFormat: "H:i",
-            time_24hr: true,
-            minuteIncrement: 1
-        });
 
         // Função para alternar entre os formulários
         function toggleForms() {
@@ -459,43 +445,6 @@
             }
         }
 
-        // Event listeners para os botões de tab
-        document.getElementById('tab-turnos').addEventListener('click', function() {
-            const tabTurnos = document.getElementById('tab-turnos');
-            const tabNaoContabeis = document.getElementById('tab-nao-contabeis');
-            const contentTurnos = document.getElementById('content-turnos');
-            const contentNaoContabeis = document.getElementById('content-nao-contabeis');
-            
-            contentTurnos.classList.remove('hidden');
-            contentNaoContabeis.classList.add('hidden');
-            
-            tabTurnos.classList.remove('hover:bg-gray-200', 'bg-gray-100', 'text-gray-600');
-            tabTurnos.classList.add('bg-blue-500', 'text-white');
-            
-            tabNaoContabeis.classList.remove('bg-blue-500', 'text-white');
-            tabNaoContabeis.classList.add('hover:bg-gray-200', 'bg-gray-100', 'text-gray-600');
-        });
-
-        document.getElementById('tab-nao-contabeis').addEventListener('click', function() {
-            const tabTurnos = document.getElementById('tab-turnos');
-            const tabNaoContabeis = document.getElementById('tab-nao-contabeis');
-            const contentTurnos = document.getElementById('content-turnos');
-            const contentNaoContabeis = document.getElementById('content-nao-contabeis');
-            
-            contentTurnos.classList.add('hidden');
-            contentNaoContabeis.classList.remove('hidden');
-            
-            tabTurnos.classList.add('hover:bg-gray-200', 'bg-gray-100', 'text-gray-600');
-            tabTurnos.classList.remove('bg-blue-500', 'text-white');
-            
-            tabNaoContabeis.classList.add('bg-blue-500', 'text-white');
-            tabNaoContabeis.classList.remove('hover:bg-gray-200', 'bg-gray-100', 'text-gray-600');
-            
-            setTimeout(() => {
-                initializeCalendar();
-            }, 100);
-        });
-
         function deleteTurno(id) {
             if (confirm('Deseja realmente excluir este turno?')) {
                 window.location.href = `/excluir_turno/${id}`;
@@ -507,13 +456,6 @@
                 window.location.href = `/excluir_dia_nao_contabil/${id}`;
             }
         }
-
-        // Fechar modal ao clicar fora dele
-        document.getElementById('modalLancamentos').addEventListener('click', function(e) {
-            if (e.target === this) {
-                toggleForms();
-            }
-        });
 
         // Fechar modal com a tecla ESC
         document.addEventListener('keydown', function(e) {
