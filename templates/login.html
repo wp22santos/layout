@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Login - Sistema de Banco de Horas">
+    <title>Login - Banco de Horas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="min-h-screen bg-gradient-to-b from-blue-500 to-blue-400 p-4">
+    <div class="max-w-md mx-auto space-y-4">
+        <!-- Header -->
+        <header class="text-white text-center mb-8">
+            <h1 class="text-2xl font-bold">Banco de Horas</h1>
+            <p class="text-white/80 text-sm mt-2">Faça login para acessar o sistema</p>
+        </header>
+
+        <!-- Login Card -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <form action="{{ url_for('login') }}" method="POST" class="space-y-4">
+                <!-- Email Field -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-envelope text-gray-400"></i>
+                        </div>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            required 
+                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="seu@email.com"
+                        >
+                    </div>
+                </div>
+
+                <!-- Password Field -->
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-lock text-gray-400"></i>
+                        </div>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            required 
+                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="••••••••"
+                        >
+                    </div>
+                </div>
+
+                <!-- Remember Me & Forgot Password -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <input 
+                            type="checkbox" 
+                            id="remember" 
+                            name="remember" 
+                            class="h-4 w-4 text-blue-500 focus:ring-blue-500 border-gray-300 rounded"
+                        >
+                        <label for="remember" class="ml-2 block text-sm text-gray-700">
+                            Lembrar-me
+                        </label>
+                    </div>
+                    <a href="{{ url_for('forgot_password') }}" class="text-sm text-blue-600 hover:text-blue-500">
+                        Esqueceu a senha?
+                    </a>
+                </div>
+
+                <!-- Login Button -->
+                <button 
+                    type="submit" 
+                    class="w-full bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                    <i class="fas fa-sign-in-alt mr-2"></i>Entrar
+                </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="relative my-6">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-300"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-2 bg-white text-gray-500">ou</span>
+                </div>
+            </div>
+
+            <!-- Register Link -->
+            <div class="text-center">
+                <p class="text-sm text-gray-600">
+                    Ainda não tem uma conta?
+                    <a href="{{ url_for('register') }}" class="text-blue-600 hover:text-blue-500 font-medium">
+                        Registre-se
+                    </a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="p-4 rounded-lg {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <script>
+        // Optional: Add password visibility toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const togglePassword = document.createElement('button');
+            togglePassword.type = 'button';
+            togglePassword.className = 'absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500';
+            togglePassword.innerHTML = '<i class="fas fa-eye"></i>';
+            togglePassword.addEventListener('click', function() {
+                const password = document.getElementById('password');
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+            });
+            
+            document.getElementById('password').parentElement.appendChild(togglePassword);
+        });
+    </script>
+</body>
+</html>

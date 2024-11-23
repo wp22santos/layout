@@ -41,17 +41,17 @@
                     <!-- Card Dias no Mês -->
                     <div class="bg-white p-3 rounded-lg border border-gray-200">
                         <div class="text-sm text-gray-600">Dias no Mês</div>
-                        <div class="text-lg font-semibold text-gray-800">{{ total_dias }}</div>
+                        <div class="text-lg font-semibold text-gray-800" data-card="dias-mes">{{ total_dias }}</div>
                     </div>
                     <!-- Card Não Contábeis -->
                     <div class="bg-white p-3 rounded-lg border border-gray-200">
                         <div class="text-sm text-gray-600">Não Contábeis</div>
-                        <div class="text-lg font-semibold text-gray-800">{{ dias_nao_contabeis if dias_nao_contabeis is number else 0 }}</div>
+                        <div class="text-lg font-semibold text-gray-800" data-card="nao-contabeis">{{ dias_nao_contabeis }}</div>
                     </div>
                     <!-- Card A Trabalhar -->
                     <div class="bg-white p-3 rounded-lg border border-gray-200">
                         <div class="text-sm text-gray-600">A Trabalhar</div>
-                        <div class="text-lg font-semibold text-gray-800">{{ dias_contabeis }}</div>
+                        <div class="text-lg font-semibold text-gray-800" data-card="dias-trabalhar">{{ dias_trabalhar }}</div>
                     </div>
                 </div>
             </div>
@@ -89,7 +89,7 @@
             {% if lista_dias_nao_contabeis %}
             <div class="p-4 border-t border-gray-100 bg-gray-50">
                 <h3 class="text-sm font-medium text-gray-700 mb-3">Dias Não Contábeis</h3>
-                <div class="space-y-2">
+                <div class="space-y-2 lista-nao-contabeis">
                     {% for dia in lista_dias_nao_contabeis %}
                     <div class="p-3 rounded-lg border border-gray-200 bg-white">
                         <div class="flex justify-between">
@@ -438,6 +438,36 @@
                 return false;
             }
         });
+
+        // Função para calcular e atualizar os valores dos cards
+        function atualizarCards() {
+            // Calcula dias no mês atual
+            const hoje = new Date();
+            const diasNoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
+            
+            // Conta os dias não contábeis
+            const listaNaoContabeis = document.querySelectorAll('.lista-nao-contabeis .p-3').length;
+            
+            // Calcula dias a trabalhar
+            const diasTrabalhar = diasNoMes - listaNaoContabeis;
+            
+            // Atualiza os valores nos cards
+            document.querySelector('[data-card="dias-mes"]').textContent = diasNoMes;
+            document.querySelector('[data-card="nao-contabeis"]').textContent = listaNaoContabeis;
+            document.querySelector('[data-card="dias-trabalhar"]').textContent = diasTrabalhar;
+        }
+
+        // Atualiza os cards quando a página carrega
+        document.addEventListener('DOMContentLoaded', function() {
+            atualizarCards();
+        });
+
+        // Atualiza os cards quando houver mudanças na lista de não contábeis
+        const observer = new MutationObserver(atualizarCards);
+        const listaNaoContabeis = document.querySelector('.lista-nao-contabeis');
+        if (listaNaoContabeis) {
+            observer.observe(listaNaoContabeis, { childList: true, subtree: true });
+        }
     </script>
 </body>
 </html>

@@ -12,8 +12,13 @@
     <div class="max-w-md mx-auto space-y-4">
         <!-- Header -->
         <header class="text-white mb-6">
-            <div class="text-center mb-4">
-                <h1 class="text-2xl font-bold">Banco de Horas</h1>
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex-1">
+                    <h1 class="text-2xl font-bold text-center">Banco de Horas</h1>
+                </div>
+                <a href="{{ url_for('logout') }}" class="text-white/90 hover:text-white transition-colors" title="Sair">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
             </div>
             <div class="flex justify-center items-center space-x-2">
                 <div class="flex items-center bg-white/20 rounded-lg px-2 py-1">
@@ -115,7 +120,7 @@
     <!-- Floating Action Button -->
     <button 
         type="button"
-        onclick="window.location.href='{{ url_for('mes_detalhe', mes=current_month) }}'" 
+        onclick="window.location.href='{{ url_for('mes_detalhe', mes=current_month) }}?modal=true'"
         class="fixed bottom-6 right-6 w-14 h-14 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
         aria-label="Adicionar registro">
         <i class="fas fa-plus text-xl" aria-hidden="true"></i>
