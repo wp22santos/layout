@@ -578,13 +578,14 @@ def lancar_dia_nao_contabil():
             # Insere cada data individualmente
             for data in datas:
                 try:
-                    # Validar o formato da data
-                    parse_date(data)
+                    # Converte a data para o formato aceito pelo PostgreSQL (YYYY-MM-DD)
+                    data_obj = datetime.strptime(data, '%d/%m/%Y')
+                    data_postgres = data_obj.strftime('%Y-%m-%d')
                     
                     # Inserir dia não contábil no Supabase
                     supabase.table('dias_nao_contabeis').insert({
                         'user_id': session['user_id'],
-                        'data': data,
+                        'data': data_postgres,  # Usa o formato PostgreSQL
                         'tipo': tipo
                     }).execute()
                     

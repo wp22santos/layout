@@ -228,6 +228,59 @@
     </div>
 
     <script>
+        // Função para inicializar o calendário com o dia atual
+        function initializeCalendar() {
+            if (!calendarInstance) {
+                const hoje = new Date();
+                const diaAtual = hoje.getDate();
+                
+                calendarInstance = flatpickr("#calendar-container", {
+                    locale: "pt",
+                    dateFormat: "d/m/Y",
+                    disableMobile: "true",
+                    inline: true,
+                    mode: "multiple",
+                    defaultDate: hoje,
+                    minDate: new Date({{ ano }}, {{ mes }} - 1, 1),
+                    maxDate: new Date({{ ano }}, {{ mes }}, 0),
+                    onChange: function(dates) {
+                        selectedDates = dates;
+                        const dataInput = document.getElementById('data-nao-contabil');
+                        if (dates.length > 0) {
+                            dataInput.value = dates.map(date => {
+                                const d = new Date(date);
+                                return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+                            }).join(', ');
+                        } else {
+                            dataInput.value = '';
+                        }
+                    },
+                    onReady: function(selectedDates, dateStr, instance) {
+                        // Seleciona o dia atual após o calendário estar pronto
+                        const currentDate = new Date({{ ano }}, {{ mes }} - 1, diaAtual);
+                        instance.setDate(currentDate, true);
+                        
+                        // Forçar as cores corretas após a inicialização
+                        const monthElement = document.querySelector('.flatpickr-current-month');
+                        const weekdaysElements = document.querySelectorAll('.flatpickr-weekday');
+                        
+                        if (monthElement) {
+                            monthElement.style.color = '#3B82F6';
+                        }
+                        
+                        weekdaysElements.forEach(el => {
+                            el.style.color = '#3B82F6';
+                        });
+                    }
+                });
+
+                // Atualizar o texto do mês atual
+                const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+                const currentMonthElement = calendarInstance.currentMonthElement;
+                currentMonthElement.textContent = `${monthNames[{{ mes }} - 1]} de {{ ano }}`;
+            }
+        }
+
         // Inicialização do Flatpickr para datas
         flatpickr(".data-picker", {
             locale: "pt",
@@ -335,17 +388,6 @@
             
             setTimeout(() => {
                 initializeCalendar();
-                // Garantir que as cores sejam aplicadas após a inicialização
-                const monthElement = document.querySelector('.flatpickr-current-month');
-                const weekdaysElements = document.querySelectorAll('.flatpickr-weekday');
-                
-                if (monthElement) {
-                    monthElement.style.color = '#3B82F6';
-                }
-                
-                weekdaysElements.forEach(el => {
-                    el.style.color = '#3B82F6';
-                });
             }, 100);
         });
 
@@ -378,48 +420,6 @@
         // Configuração do calendário para não contábeis
         let calendarInstance = null;
         let selectedDates = [];
-
-        function initializeCalendar() {
-            if (!calendarInstance) {
-                calendarInstance = flatpickr("#calendar-container", {
-                    locale: "pt",
-                    dateFormat: "d/m/Y",
-                    disableMobile: "true",
-                    inline: true,
-                    mode: "multiple",
-                    defaultDate: new Date({{ ano }}, {{ mes }} - 1, 1),
-                    minDate: new Date({{ ano }}, {{ mes }} - 1, 1),
-                    maxDate: new Date({{ ano }}, {{ mes }}, 0),
-                    onChange: function(dates) {
-                        selectedDates = dates;
-                        const dataInput = document.getElementById('data-nao-contabil');
-                        if (dates.length > 0) {
-                            dataInput.value = dates.map(date => date.toLocaleDateString('pt-BR')).join(', ');
-                        } else {
-                            dataInput.value = '';
-                        }
-                    },
-                    onReady: function() {
-                        // Forçar as cores corretas após a inicialização
-                        const monthElement = document.querySelector('.flatpickr-current-month');
-                        const weekdaysElements = document.querySelectorAll('.flatpickr-weekday');
-                        
-                        if (monthElement) {
-                            monthElement.style.color = '#3B82F6';
-                        }
-                        
-                        weekdaysElements.forEach(el => {
-                            el.style.color = '#3B82F6';
-                        });
-                    }
-                });
-
-                // Atualizar o texto do mês atual
-                const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-                const currentMonthElement = calendarInstance.currentMonthElement;
-                currentMonthElement.textContent = `${monthNames[{{ mes }} - 1]} de {{ ano }}`;
-            }
-        }
 
         // Adiciona validação ao formulário
         document.getElementById('form-nao-contabeis').addEventListener('submit', function(e) {
