@@ -1,0 +1,113 @@
+/* Variáveis CSS */
+:root {
+    --primary-color: #3B82F6;
+    --text-gray-600: #4B5563;
+    --text-gray-700: #374151;
+    --bg-white: #FFFFFF;
+    --bg-gray-50: #F9FAFB;
+    --border-gray-200: #E5E7EB;
+}
+
+/* Estilos base */
+.card-base {
+    @apply bg-white p-3 rounded-lg border border-gray-200;
+}
+
+.input-base {
+    @apply w-full rounded-lg border-gray-300 bg-gray-50 p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+}
+
+.btn-primary {
+    @apply bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-colors duration-200 text-sm font-medium;
+}
+
+/* Estilos do Flatpickr */
+.flatpickr-calendar {
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 300px !important;
+    box-shadow: none !important;
+    border-radius: 0.75rem !important;
+    border: 1px solid var(--border-gray-200) !important;
+}
+
+.flatpickr-day {
+    border-radius: 0.5rem !important;
+    margin: 1px !important;
+    height: 36px !important;
+    line-height: 36px !important;
+    width: 36px !important;
+}
+
+.flatpickr-day.selected {
+    background: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.flatpickr-day:hover {
+    background: #93C5FD !important;
+}
+
+.flatpickr-day.today {
+    border-color: var(--primary-color) !important;
+}
+
+.flatpickr-current-month {
+    padding-top: 0.5rem !important;
+    font-size: 1.1rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: var(--primary-color) !important;
+}
+
+.flatpickr-weekday {
+    color: var(--primary-color) !important;
+    font-weight: 500 !important;
+}
+
+/* Modal */
+.modal-base {
+    @apply fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50;
+}
+
+.modal-content {
+    @apply relative top-20 mx-auto p-5 w-full max-w-md;
+}
+
+/* Cards */
+.info-card {
+    @apply bg-white p-3 rounded-lg border border-gray-200 transition-shadow duration-200 hover:shadow-md;
+}
+
+.info-card-title {
+    @apply text-sm text-gray-600 mb-1;
+}
+
+.info-card-value {
+    @apply text-lg font-semibold text-gray-800;
+}
+
+/* Formulários */
+.form-group {
+    @apply space-y-1;
+}
+
+.form-label {
+    @apply block text-sm font-medium text-gray-700;
+}
+
+/* Animações */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Utilitários */
+.text-truncate {
+    @apply overflow-hidden whitespace-nowrap text-ellipsis;
+}
